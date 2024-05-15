@@ -1,0 +1,64 @@
+samples: "" # replace path
+contaminants: "" # replace path
+result_dir: "results"
+
+host_filtering: True
+compute_phylogeny: True
+extra_search: True
+
+db_search:
+  MS2_params:
+    fdr: 1
+  peptide_shaker_params:
+    peptide_fdr: 1
+    protein_fdr: 1
+    psm_fdr: 1
+  ref: "" # replace path
+  protein_accessions: "" # replace path
+  scoring_engine: "PeptideShaker"
+
+mapping:
+  number_of_taxids: 5
+  max_weight_differences: 2 # how many times should the value be bigger to not consider lower values, ex. 10 is 5 times bigger than 2, so the taxid with weight 2 is not considered for further analysis
+  number_of_strains: 30
+
+fetchData:
+  sqlite_db_path: "" # replace path if required (for some servers)
+  max_number_accessions: 500
+  sequence_length_diff: 2
+  max_sequence_length: 500000 # sequence longer than this value are not considered (most likely whole genome shotgut sequencing data, not clean genome sequence)
+  use_NCBI_Taxa: False
+  only_use_complete_genomes: True
+
+sixpack:
+  orfminsize: 25 # how many AAs are required for the ORF
+  additional_parameters: ""
+
+SearchGUI: "" # replace path, conda version yields errors
+PeptideShaker: "" # replace path, conda version yields errors
+
+# resources
+SearchGUI_mem_mb: 200000 # default on most servers is 1000 mb, which is often not enough
+PeptideShaker_mem_mb: 200000 # default on most servers is 1000 mb, which is often not enough
+system_latency: 1 # how many second should be waited until next step (important for the six-frame translation; should be about 1 second for virus and 10 for bacteria (due to larger size))
+
+Entrez:
+  APIMail: "" # replace with your mail address of your NCBI account
+  APIKey: "" # replace with your API key of your NCBI account
+
+MS2Rescore:
+  fragment_tolerance: "" # replace if MS2Rescore is used
+  fragmentation_method: "" # replace if MS2Rescore is used
+  spectrum_pattern: "" # replace if MS2Rescore is used
+
+similarity_threshold: 0.98
+compute_similarity_matrix: True
+words_blacklist: ["recombinant"]
+
+DatabaseSuitability:
+  DeNovoGui: "" # replace path if the database suitability is computed
+  compute_database_suitability: True
+
+CovidMode:
+  min_num_genomes_per_lineage: 3
+  num_top_scoring_per_lineage: 3

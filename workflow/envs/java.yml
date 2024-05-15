@@ -1,0 +1,9 @@
+name: JavaEnv
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+  - default
+dependencies:
+  - openjdk=11.0.13
+

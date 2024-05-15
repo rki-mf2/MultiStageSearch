@@ -1,0 +1,9 @@
+name: mafft
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+  - default
+dependencies:
+  - python=3.9
+  - mafft=7.520

@@ -1,0 +1,346 @@
+---
+title: "Results Report"
+output: html_document
+params:
+  sample_name: NULL
+  res_dir: NULL
+---
+
+```{r import, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+library(readr)
+library(knitr)
+library(dplyr)
+library(DT)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 999)
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+
+# get all paths
+sample_name = params$sample_name
+res_dir = params$res_dir
+plots_path = paste(res_dir, sample_name, "Plots/", sep = "/") 
+
+# first search
+taxIdScores_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "taxIdScores_bar_plot.png")
+first_search_confidence_histogram = sprintf("%s%s_%s", plots_path, sample_name, "first_search_confidence_histogram.png")
+
+# final search
+strain_counts_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "strain_counts_bar_plot.png")
+strain_conf_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "strain_conf_bar_plot.png")
+final_search_confidence_histogram = sprintf("%s%s_%s", plots_path, sample_name, "final_search_confidence_histogram.png")
+ORFScores_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "ORFScores_bar_plot.png")
+count_confidence_scores_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "count_confidence_scores_bar_plot.png")
+proteome_length_scoring_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "proteome_length_scoring_bar_plot.png")
+
+# extra search
+extra_search_confidence_histogram = sprintf("%s%s_%s", plots_path, sample_name, "extra_search_confidence_histogram.png")
+extra_search_ORFScores_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "extra_search_ORFScores_bar_plot.png")
+extra_search_strain_conf_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "extra_search_strain_conf_bar_plot.png")
+extra_search_count_confidence_scores_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "extra_search_count_confidence_scores_bar_plot.png")
+extra_search_strain_counts_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "extra_search_strain_counts_bar_plot.png")
+extra_search_proteome_length_scoring_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "extra_search_proteome_length_scoring_bar_plot.png")
+
+# misc
+proportions_pie_chart = sprintf("%s%s_%s", plots_path, sample_name, "proportions_pie_chart.png")
+suitability_bar_plot = sprintf("%s%s_%s", plots_path, sample_name, "database_suitability_bar_plot.png")
+similartiy_heatmap = sprintf("%s%s_%s", plots_path, sample_name, "similarity_heatmap.png")
+peptidome_heatmap = sprintf("%s%s_%s", plots_path, sample_name, "peptidome_heatmap.png")
+phylogenetic_tree = sprintf("%s%s_%s", plots_path, sample_name, "phylogeny.png")
+
+# logs
+logs_path = paste(res_dir, "logs", sample_name, sep = "/") 
+
+filter_host_spectra_log = paste(logs_path, "hostfiltering", "FilterSpectra", "stdout.log", sep = "/")
+
+fetch_data_log = paste(logs_path, "FetchData", "fetchStrainGenomes", "stdout.log", sep = "/")
+
+filter_duplicate_proteomes_log = paste(logs_path, "genome2proteome", "FilterDuplicateProteomes", "stdout.log", sep = "/")
+cluster_duplicate_ORFs_log  = paste(logs_path, "genome2proteome", "FilterDuplicates", "stdout.log", sep = "/")
+extra_search_cluster_duplicate_ORFs_log  = paste(logs_path, "extragenome2proteome", "FilterDuplicates", "stdout.log", sep = "/")
+create_plots_log = paste(logs_path, "Plots", "createPlots", "stdout.log", sep = "/")
+
+
+# tables
+tables_path = paste(res_dir, sample_name, "taxids/", sep = "/") 
+strain_name_counts = paste(tables_path, "strain_name_counts.tsv", sep="")
+orf_scores  = paste(tables_path, "ORF_scores.csv", sep="")
+top_scoring_strain_name_counts = paste(tables_path, "extra_search_strain_name_counts.tsv", sep="")
+top_scoring_orf_scores = paste(tables_path, "extra_search_ORF_scores.csv", sep="")
+
+strain_accessions = paste(res_dir, sample_name, "FetchData", "strain_accessions.csv", sep="/")
+
+activate_covid_mode_log = paste(res_dir, sample_name, "FetchData", "activate_covid_mode.txt", sep="/")
+```
+
+
+## Metadata:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+# Metadata
+cat(paste("#### The report shows the results of the sample: ", sample_name))
+```
+
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+if (file.exists(proportions_pie_chart)) {
+  cat(paste("Piechart showing the number of PSMs found for the first three searches.<br>"))
+  knitr::include_graphics(proportions_pie_chart)
+}
+```
+
+## Host Filtering:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+if (file.exists(filter_host_spectra_log)) {
+  host_filter_info = read_file(filter_host_spectra_log)
+  cat(paste("MultiStageSearch", host_filter_info))
+} else {
+  cat(paste("Host Filtering was disabled."))
+}
+```
+
+## Reference Database Search:
+```{r, echo=FALSE, results='asis', out.width='50%'}
+
+if ((file.exists(taxIdScores_bar_plot)) && (file.exists(first_search_confidence_histogram))) {
+  cat(paste("The left plot shows the weighting of candidate taxa at species level, which build the basis for the next search steps. <br>The right plot shows the confidence distribution of the found PSMs.<br>"))
+  knitr::include_graphics(c(taxIdScores_bar_plot, first_search_confidence_histogram))
+} else {
+
+  cat("Something went wrong in this search step!")
+}
+```
+
+## Fetching of Data:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+
+cat(paste("Table showing the fetched genomes with according metadata such as Taxon-ID or strain name:"))
+df<-readr::read_csv(strain_accessions)
+df<-DT::datatable(df[,c(5,1,2,3,4,6)], options = list(paging = FALSE, autoWidth = TRUE, fixedHeader = TRUE, scrollY = '50vh', scrollCollapse = TRUE), class = 'display compact')
+df
+
+cat(paste("The log file for the fetchData step can be found here:", fetch_data_log, "<br>"))
+cat(paste("It can happen that some sequence records are imediatly removed by the step, due to problems for the record. (i.e. no sequence for the sequence record is found)<br>"))
+fetch_data_info = read_file(fetch_data_log)
+fetch_data_info <- gsub("\n", "<br>", fetch_data_info)
+fetch_data_info <- gsub("INFO:root:", "", fetch_data_info)
+cat(paste(fetch_data_info))
+```
+
+### Covid Mode:
+```{r, echo=FALSE, results='asis', message=FALSE}
+if (file.exists(activate_covid_mode_log)) {
+  activate_covid_mode_info = read_file(activate_covid_mode_log)
+  cat(paste("Activation of the Covid Mode:", activate_covid_mode_info))
+}
+```
+
+## Preparation of proteogenomic Database:
+### Filtering of duplicate Proteomes:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+filter_duplicate_proteomes_info = read_file(filter_duplicate_proteomes_log)
+filter_duplicate_proteomes_info <- gsub("\n", "<br>", filter_duplicate_proteomes_info)
+filter_duplicate_proteomes_info <- gsub("INFO:root:", "", filter_duplicate_proteomes_info)
+cat(paste(filter_duplicate_proteomes_info))
+cat(paste("<br>"))
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+
+if (file.exists(similartiy_heatmap)) {
+  cat(paste("Heatmap showing the pairwise similarity of the top scoring proteomes."))
+  knitr::include_graphics(similartiy_heatmap)
+} else {
+  cat(paste("Computation of the similarity heatmap was disabled."))
+}
+```
+
+### Clustering of Open Reading Frames:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+cluster_duplicate_ORFs_info = read_file(cluster_duplicate_ORFs_log)
+cluster_duplicate_ORFs_info <- gsub("\n", "<br>", cluster_duplicate_ORFs_info)
+cluster_duplicate_ORFs_info <- gsub("INFO:root:", "", cluster_duplicate_ORFs_info)
+cat(paste(cluster_duplicate_ORFs_info))
+```
+
+
+## Proteogenomic Database Search:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+cat(paste("#### Table showing the scores for the top scoring Taxon-IDs of the proteogenomic database search"), "<br>")
+strain_name_counts_df<-readr::read_tsv(strain_name_counts)
+orf_scores_df<-readr::read_csv(orf_scores)
+results_df<-inner_join(strain_name_counts_df, orf_scores_df, by="genbank_accession")
+results_table<-DT::datatable(results_df[,c(5,1,2,3,4,6,8,9,10,11,14)], options = list(paging = FALSE, autoWidth = TRUE, fixedHeader = TRUE, scrollY = '50vh', scrollCollapse = TRUE, scrollX = TRUE), class = 'display compact')
+results_table
+
+winning_counts<-results_df %>%
+  arrange(desc(counts)) %>%
+  pull(taxa) %>%
+  .[1]
+
+winning_confidence_scoring<-results_df %>%
+  arrange(desc(confidence_scoring)) %>%
+  pull(taxa) %>%
+  .[1]
+
+winning_weights<-results_df %>%
+  arrange(desc(weight)) %>%
+  pull(taxa) %>%
+  .[1]
+
+winning_proteome_length_scoring<-results_df %>%
+  arrange(desc(length_scoring)) %>%
+  pull(taxa) %>%
+  .[1]
+
+
+cat("Taxon-ID with the highest count of PSMs:", paste(winning_counts), "<br>")
+cat("Taxon-ID with the highest confidence scoring:", paste(winning_confidence_scoring), "<br>")
+cat("Taxon-ID with the highest weight:", paste(winning_weights), "<br>")
+cat("Taxon-ID with the highest proteome length scoring:", paste(winning_proteome_length_scoring), "<br>")
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE, out.width='50%'}
+
+if ((file.exists(strain_counts_bar_plot)) && (file.exists(ORFScores_bar_plot))) {
+  cat(paste("The left plot shows the counts for the taxa with the highest amounts of PSMs. <br>The right plot shows the weighting of the strain taxa with the highest weights.<br>"))
+  knitr::include_graphics(c(strain_counts_bar_plot, ORFScores_bar_plot))
+} else {
+
+  cat("Something went wrong in this search step!")
+}
+
+if ((file.exists(count_confidence_scores_bar_plot)) && (file.exists(proteome_length_scoring_bar_plot))) {
+  cat(paste("The left plot shows the strain taxa with the highest confidence scoring. <br>The right plot shows the strain taxa with the highest proteome_length_scoring.<br>"))
+  knitr::include_graphics(c(count_confidence_scores_bar_plot, final_search_confidence_histogram))
+} else {
+
+  cat("Something went wrong in this search step!")
+}
+
+if ((file.exists(strain_conf_bar_plot)) && (file.exists(final_search_confidence_histogram))) {
+  cat(paste("The left plot shows the strain taxa with the highest mean confidences for the PSMs. <br>The right plot shows the distribution of the confidence of PSMs in this search step.<br>"))
+  knitr::include_graphics(c(strain_conf_bar_plot, final_search_confidence_histogram))
+} else {
+
+  cat("Something went wrong in this search step!")
+}
+```
+
+## Top-Scoring Proteogenomic Database Search
+
+### Clustering of Open Reading Frames:
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+extra_search_cluster_duplicate_ORFs_info = read_file(extra_search_cluster_duplicate_ORFs_log)
+extra_search_cluster_duplicate_ORFs_info <- gsub("\n", "<br>", extra_search_cluster_duplicate_ORFs_info)
+extra_search_cluster_duplicate_ORFs_info <- gsub("INFO:root:", "", extra_search_cluster_duplicate_ORFs_info)
+cat(paste(extra_search_cluster_duplicate_ORFs_info))
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+if (file.exists(top_scoring_strain_name_counts)){
+  cat(paste("#### Table showing the scores for the top scoring Taxon-IDs of the top-scoring proteogenomic database search"), "<br>")
+  top_scoring_strain_name_counts_df<-readr::read_tsv(top_scoring_strain_name_counts)
+  top_scoring_orf_scores_df<-readr::read_csv(top_scoring_orf_scores)
+  results_df<-inner_join(top_scoring_strain_name_counts_df, top_scoring_orf_scores_df, by="genbank_accession")
+  results_table<-DT::datatable(results_df[,c(5,1,2,3,4,6,8,9,10,11,14)], options = list(paging = FALSE, autoWidth = TRUE, fixedHeader = TRUE, scrollY = '50vh', scrollCollapse = TRUE, scrollX = TRUE), class = 'display compact')
+}
+
+if (file.exists(top_scoring_strain_name_counts)){
+  results_table
+}
+
+if (file.exists(top_scoring_strain_name_counts)){
+  winning_counts<-results_df %>%
+    arrange(desc(counts)) %>%
+    pull(taxa) %>%
+    .[1]
+  
+  winning_confidence_scoring<-results_df %>%
+    arrange(desc(confidence_scoring)) %>%
+    pull(taxa) %>%
+    .[1]
+  
+  winning_weights<-results_df %>%
+    arrange(desc(weight)) %>%
+    pull(taxa) %>%
+    .[1]
+  
+  winning_proteome_length_scoring<-results_df %>%
+  arrange(desc(length_scoring)) %>%
+  pull(taxa) %>%
+  .[1]
+  
+  
+  cat("Taxon-ID with the highest count of PSMs:", paste(winning_counts), "<br>")
+  cat("Taxon-ID with the highest confidence scoring:", paste(winning_confidence_scoring), "<br>")
+  cat("Taxon-ID with the highest weight:", paste(winning_weights), "<br>")
+  cat("Taxon-ID with the highest proteome length scoring:", paste(winning_proteome_length_scoring), "<br>")
+} else {
+  cat(paste("The top-scoring search was disabled."))
+}
+```
+  
+```{r, echo=FALSE, results='asis', message=FALSE, out.width='50%'}
+
+if ((file.exists(extra_search_strain_counts_bar_plot)) && (file.exists(extra_search_ORFScores_bar_plot))) {
+  cat(paste("The left plot shows the counts for the taxa with the highest amounts of PSMs. <br>The right plot shows the weighting of the strain taxa with the highest weights.<br>"))
+  knitr::include_graphics(c(extra_search_strain_counts_bar_plot, extra_search_ORFScores_bar_plot))
+}
+if ((file.exists(extra_search_count_confidence_scores_bar_plot)) && (file.exists(extra_search_proteome_length_scoring_bar_plot))) {
+  cat(paste("The left plot shows the strain taxa with the highest confidence scoring. <br>The right plot shows the strain taxa with the highest proteome_length_scoring.<br>"))
+  knitr::include_graphics(c(extra_search_count_confidence_scores_bar_plot, extra_search_proteome_length_scoring_bar_plot))
+}
+
+if ((file.exists(extra_search_strain_conf_bar_plot)) && (file.exists(extra_search_confidence_histogram))) {
+  cat(paste("The left plot shows the strain taxa with the highest mean confidences for the PSMs. <br>The right plot shows the distribution of the confidence of PSMs in this search step.<br>"))
+  knitr::include_graphics(c(strain_conf_bar_plot, extra_search_confidence_histogram))
+}
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+
+if (file.exists(peptidome_heatmap)) {
+  cat(paste("Heatmap showing the pairwise similarities of identified peptides."))
+  knitr::include_graphics(peptidome_heatmap)
+}
+```
+
+
+## Database Suitability
+```{r, echo=FALSE, results='asis', message=FALSE}
+
+if (file.exists(suitability_bar_plot)) {
+  knitr::include_graphics(suitability_bar_plot)
+} else {
+  cat(paste("Database Suitability was disabled."))
+}
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE}
+create_plots_info = read_file(create_plots_log)
+create_plots_info <- gsub("INFO:matplotlib.category:Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.", "", create_plots_info)
+create_plots_info <- gsub("\n", "<br>", create_plots_info)
+create_plots_info <- gsub("INFO:root:", "", create_plots_info)
+cat(paste(create_plots_info))
+```
+
+## Phylogeny
+```{r, echo=FALSE, results='asis', message=FALSE}
+
+if (file.exists(phylogenetic_tree)) {
+  knitr::include_graphics(phylogenetic_tree)
+} else {
+  cat(paste("The computation of the phylogeny was deactivated in the config.yaml."))
+}
+```

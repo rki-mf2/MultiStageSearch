@@ -1,0 +1,8 @@
+name: basePython
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+  - default
+dependencies:
+  - python=3.9

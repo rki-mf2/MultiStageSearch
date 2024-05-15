@@ -1,0 +1,2 @@
+sample	mgf	searchgui_par	host_fasta	novor_par
+PXD005104_Herpessimplex_1	resources/mgf_files/PXD005104_Herpessimplex_1.mgf	resources/par_files/PXD005104_Herpessimplex_1.par	resources/Database/PXD005104_Herpessimplex_1/GRCh38_latest_protein.faa	resources/par_files/PXD005104_Herpessimplex_1_NOVOR.par

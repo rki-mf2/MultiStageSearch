@@ -1,0 +1,12 @@
+name: FetchData
+channels:
+  - conda-forge
+  - bioconda
+  - default
+dependencies:
+  - python=3.9
+  - pandas=1.5.3
+  - numpy=1.22.4
+  - biopython=1.81
+  - ete3=3.1.2
+  - ncbi-datasets-cli=16.4.7

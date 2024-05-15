@@ -1,0 +1,11 @@
+name: reportEnv
+channels:
+  - conda-forge
+  - bioconda
+  - default
+dependencies:
+  - r-base=4.3.2
+  - r-readr=2.1.5
+  - r-knitr=1.45
+  - r-dplyr=1.1.4
+  - r-DT=0.33

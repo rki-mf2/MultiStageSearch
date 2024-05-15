@@ -1,0 +1,10 @@
+name: mapping
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+  - default
+dependencies:
+  - python=3.9
+  - pandas=1.5.3
+  - biopython=1.81

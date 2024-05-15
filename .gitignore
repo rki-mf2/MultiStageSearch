@@ -1,0 +1,13 @@
+results/*
+resources/*
+bin/*
+tests/*
+
+.snakemake/*
+.snakemake/
+.vscode/
+.idea/*
+.DS_Store
+
+slurm_config.yml
+slurm/*

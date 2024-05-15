@@ -1,0 +1,49 @@
+# config
+configfile: "config/config.yaml"
+
+# imports
+from pathlib import Path
+import pandas as pd 
+
+
+# global variables
+SAMPLES = pd.read_csv(config["samples"],index_col="sample",sep='\t')
+MGF_FILE = lambda wildcards: SAMPLES.at[wildcards.sample, 'mgf']
+SEARCHGUI_PAR_FILE = lambda wildcards: SAMPLES.at[wildcards.sample, 'searchgui_par']
+HOST_FASTA = lambda wildcards: SAMPLES.at[wildcards.sample, 'host_fasta']
+
+RESULT_DIR = Path(config["result_dir"])
+HOST_FILTERING = config["host_filtering"]
+COMPUTE_PHYLOGENY = config["compute_phylogeny"]
+EXTRA_SEARCH = config["extra_search"]
+COMPUTE_DB_SUITABILITY = config["DatabaseSuitability"]["compute_database_suitability"]
+COMPUTE_SIMILARITY_MATRIX = config["compute_similarity_matrix"]
+
+if COMPUTE_DB_SUITABILITY:
+    NOVOR_PAR_FILE = lambda wildcards: SAMPLES.at[wildcards.sample, 'novor_par']
+
+# include load functions
+include: "rules/load_functions.smk"
+
+# collect all output files
+rule all:
+    input:
+        General.get_input_all
+
+# includes
+include: "rules/host_filtering.smk"
+include: "rules/first_db_search.smk"
+include: "rules/mapping.smk"
+include: "rules/fetch_data.smk"
+include: "rules/genome2proteome.smk"
+include: "rules/final_db_search.smk"
+include: "rules/plots.smk"
+include: "rules/utils.smk"
+include: "rules/pepGM.smk"
+include: "rules/phylogeny.smk"
+include: "rules/extra_db_search.smk"
+include: "rules/extra_genome2proteome.smk"
+include: "rules/covid_mode.smk"
+
+if COMPUTE_DB_SUITABILITY:
+    include: "rules/DatabaseSuitability.smk"

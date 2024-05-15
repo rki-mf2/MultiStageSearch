@@ -1,0 +1,11 @@
+name: pandas
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+  - default
+dependencies:
+  - python=3.9
+  - pandas=1.5.3
+  - numpy=1.22.4
+
