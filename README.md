@@ -1,5 +1,8 @@
 # MultiStageSearch
 
+## Citation
+Pipart, J., Holstein, T., Martens, L., & Muth, T. (2025). MultiStageSearch: An Iterative Workflow for Unbiased Taxonomic Analysis of Pathogens Using Proteogenomics. Journal of Proteome Research. DOI: 10.1021/acs.jproteome.4c00901 Link: https://pubs.acs.org/doi/10.1021/acs.jproteome.4c00901
+
 ## Goal of this Pipeline
 Databases tend to be biased. MultiStageSearch aims to overcome this challenge by addressing different bias types during the workflow and combining proteomic and genomic data to improve the results of high-resolution taxonomic inference of viral and bacterial samples.
 
